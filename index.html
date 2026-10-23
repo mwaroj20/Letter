@@ -34301,7 +34301,7 @@ function openSaveDialog(mode){
 }
 function afterSave(){if(sendMode==="send"){
     toast("บันทึกไฟล์เรียบร้อยแล้ว กำลังเปิดเว็บส่งหนังสือ",{label:"คัดลอกข้อมูลกรอกเว็บ",fn:function(){var t=webDataText();try{navigator.clipboard.writeText(t).then(function(){toast("คัดลอกข้อมูลแล้ว นำไปวางในเว็บได้");});}catch(e){toast("คัดลอกไม่ได้ ให้ใช้ปุ่ม “คัดลอกข้อความ”");}}});
-    openSendSite();}else toast("บันทึกไฟล์ "+(sendMode==="word"?"Word":"PDF")+" เรียบร้อยแล้ว");}
+    if(window.__dlx){window.__dlx=0;setTimeout(openSendSite,1800);}else openSendSite();}else toast("บันทึกไฟล์ "+(sendMode==="word"?"Word":"PDF")+" เรียบร้อยแล้ว");}
 function quickSave(mode){
   /* ไม่ผ่านกล่องตั้งชื่อ: ใช้ชื่อเรื่องเป็นชื่อไฟล์เริ่มต้น แล้วเปิดหน้าต่างเลือกที่เก็บทันที */
   sendMode=mode;pre.blob=null;pre.p=null;
@@ -34353,7 +34353,7 @@ async function runSave(base,go){
       }
       throw new Error("noshare");
     }else{
-      var u=URL.createObjectURL(blob),a=document.createElement("a");a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(u);},8000);
+      var u=URL.createObjectURL(blob),a=document.createElement("a");a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();window.__dlx=1;setTimeout(function(){URL.revokeObjectURL(u);},8000);
     }
   }catch(e){if(e&&(e.code==="declined"||e.name==="AbortError"))return;toast("บันทึกไฟล์ไม่สำเร็จ ลองอีกครั้ง");return;}
   $("sendmod").hidden=true;

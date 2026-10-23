@@ -1,4 +1,4 @@
-const V = "Letter-v39"; /* เปลี่ยนเลขเวอร์ชันเมื่อแก้ไฟล์ เพื่อให้เครื่องที่ติดตั้งไว้อัปเดต */
+const V = "Letter-v40"; /* เปลี่ยนเลขเวอร์ชันเมื่อแก้ไฟล์ เพื่อให้เครื่องที่ติดตั้งไว้อัปเดต */
 const CORE = ["./", "./index.html", "./manifest.webmanifest", "./icon-192.png", "./icon-180.png", "./icon-512.png", "./icon-maskable-512.png"];
 self.addEventListener("install", e => {
   e.waitUntil(caches.open(V).then(c => c.addAll(CORE)).then(() => self.skipWaiting()));
