@@ -33436,6 +33436,13 @@ textarea{resize:vertical;min-height:70px}
       </div>
     </div>
 
+    <div class="sec">
+      <h2>บัญชีเข้าเว็บส่งหนังสือ</h2>
+      <p style="margin:0 0 10px;font-size:13px;color:#5b6477;line-height:1.5">ใส่ครั้งเดียวต่อเครื่อง ใช้ให้เว็บส่งหนังสือเข้าสู่ระบบให้อัตโนมัติเมื่อกด “ส่ง” ข้อมูลนี้เก็บเฉพาะในเครื่องนี้ ไม่ถูกบันทึกลงหนังสือหรือไฟล์ที่บันทึก</p>
+      <div class="fld"><label for="amssU">ชื่อผู้ใช้</label><input id="amssU" autocomplete="off" autocapitalize="off" spellcheck="false"></div>
+      <div class="fld"><label for="amssP">รหัสผ่าน</label><input id="amssP" type="password" autocomplete="off"></div>
+    </div>
+
     <div class="sec" id="attsec">
       <h2>เอกสารแนบต่อท้าย</h2>
       <p style="margin:0 0 10px;font-size:13px;color:#5b6477;line-height:1.5">แทรกไฟล์ PDF หรือรูปภาพ ให้ต่อจากหนังสือและรวมเป็นไฟล์ PDF เดียวกัน (ใช้ได้กับปุ่ม “บันทึกเป็น PDF” และ “พิมพ์”)</p>
@@ -34254,11 +34261,17 @@ $("attcam").addEventListener("change",function(){var f=this.files;addAttachments
 var SEND_URL="http://101.51.2.178/amss-ubn3/index.php?option=book&task=main/send&index=1";
 /* ข้อมูลที่จะกรอกในเว็บส่งหนังสือ (ใช้คู่กับสคริปต์ AMSS-autofill.user.js ที่ติดตั้งในเบราว์เซอร์) */
 var lastSend=null,sendWin=null;
+/* บัญชีเข้าเว็บส่งหนังสือ: เก็บในเครื่องนี้เท่านั้น (localStorage) */
+function loginGet(){try{var o=JSON.parse(localStorage.getItem("amssLogin")||"{}");return {u:String(o.u||""),p:String(o.p||"")};}catch(_){return {u:"",p:""};}}
+(function(){var o=loginGet();$("amssU").value=o.u;$("amssP").value=o.p;
+  function sv(){try{localStorage.setItem("amssLogin",JSON.stringify({u:$("amssU").value.trim(),p:$("amssP").value}));}catch(_){}}
+  $("amssU").addEventListener("input",sv);$("amssP").addEventListener("input",sv);})();
+function buildFields(name){var lg=loginGet();return {login:(lg.u&&lg.p)?lg:null,dateISO:String(S.date||""),dateTH:dateText(S.date),toGroup:String(S.toGroup||""),no:fullNo(),subject:String(S.subject||"").trim(),summary:String(S.body||"").trim(),fileDesc:String(S.subject||"").trim(),fileName:name};}
 function sendUrl(){var u=SEND_URL;try{if(lastSend&&lastSend.fields){var j=JSON.stringify(lastSend.fields),b=btoa(unescape(encodeURIComponent(j))).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");u+="#amss="+b;}}catch(_){}return u;}
 function webDataText(){var d=lastSend&&lastSend.fields;if(!d)return "";return (d.toGroup?"ถึง: "+d.toGroup+"\n":"")+"เลขที่หนังสือ: "+d.no+(d.dateTH?"\nวันที่: "+d.dateTH:"")+"\nเรื่อง: "+d.subject+"\nเนื้อหาโดยสรุป: "+d.summary+"\nคำอธิบายไฟล์: "+d.fileDesc;}
 window.addEventListener("message",function(e){
   var d=e.data;if(d&&d.type==="amss-done"&&lastSend&&e.source===sendWin){lastSend.done=true;return;}
-  if(!d||d.type!=="amss-ready"||!lastSend||lastSend.done||!sendWin||e.source!==sendWin)return;
+  if(!d||d.type!=="amss-ready"||!lastSend||!lastSend.blob||lastSend.done||!sendWin||e.source!==sendWin)return;
   var org="";try{org=new URL(SEND_URL).origin;}catch(_){return;}
   if(e.origin!==org)return;
   var ls=lastSend;
@@ -34301,11 +34314,20 @@ function openSaveDialog(mode){
 }
 function afterSave(){if(sendMode==="send"){
     toast("บันทึกไฟล์เรียบร้อยแล้ว กำลังเปิดเว็บส่งหนังสือ",{label:"คัดลอกข้อมูลกรอกเว็บ",fn:function(){var t=webDataText();try{navigator.clipboard.writeText(t).then(function(){toast("คัดลอกข้อมูลแล้ว นำไปวางในเว็บได้");});}catch(e){toast("คัดลอกไม่ได้ ให้ใช้ปุ่ม “คัดลอกข้อความ”");}}});
-    if(window.__dlx){window.__dlx=0;setTimeout(openSendSite,1800);}else openSendSite();}else toast("บันทึกไฟล์ "+(sendMode==="word"?"Word":"PDF")+" เรียบร้อยแล้ว");}
+    if(window.__early){window.__early=false;}else openSendSite();}else toast("บันทึกไฟล์ "+(sendMode==="word"?"Word":"PDF")+" เรียบร้อยแล้ว");}
 function quickSave(mode){
   /* ไม่ผ่านกล่องตั้งชื่อ: ใช้ชื่อเรื่องเป็นชื่อไฟล์เริ่มต้น แล้วเปิดหน้าต่างเลือกที่เก็บทันที */
   sendMode=mode;pre.blob=null;pre.p=null;
   if(libReady()){pre.p=(async function(){try{pre.blob=await buildForMode();}catch(e){pre.blob=null;}})();}
+  window.__early=false;
+  if(mode==="send"&&!window.showSaveFilePicker&&!window.claude&&!isIOS()){
+    /* ไม่มีหน้าต่างเลือกที่เก็บ (เช่น แท็บเล็ต Android): เปิดเว็บส่งหนังสือทันทีที่กด (ยังอยู่ในจังหวะที่เบราว์เซอร์อนุญาต) แล้วดาวน์โหลดไฟล์ตามหลัง */
+    try{
+      lastSend={blob:null,name:cleanName(S.subject)+".pdf",fields:null};lastSend.fields=buildFields(lastSend.name);
+      var w=window.open(sendUrl(),"_blank");
+      if(w){sendWin=w;window.__early=true;}
+    }catch(e){}
+  }
   runSave(S.subject,$("send-go"));
 }
 $("btn-send").addEventListener("click",function(){quickSave("send");});
@@ -34330,7 +34352,7 @@ async function runSave(base,go){
     catch(e){busy(go,false);toast(sendMode==="word"?"สร้างไฟล์ Word ไม่สำเร็จ ลองอีกครั้ง":"สร้าง PDF ไม่สำเร็จ ลองอีกครั้ง");return;}
     busy(go,false);
   }
-  if(wasSend){lastSend={blob:blob,name:name,fields:{dateISO:String(S.date||""),dateTH:dateText(S.date),toGroup:String(S.toGroup||""),no:fullNo(),subject:String(S.subject||"").trim(),summary:String(S.body||"").trim(),fileDesc:String(S.subject||"").trim(),fileName:name}};}
+  if(wasSend){lastSend={blob:blob,name:name,fields:buildFields(name)};}
   try{
     if(handle){var wr=await handle.createWritable();await wr.write(blob);await wr.close();}
     else if(window.claude){
