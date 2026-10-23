@@ -34353,7 +34353,7 @@ async function runSave(base,go){
       }
       throw new Error("noshare");
     }else{
-      var u=URL.createObjectURL(blob),a=document.createElement("a");a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();window.__dlx=1;setTimeout(function(){URL.revokeObjectURL(u);},8000);
+      var u=URL.createObjectURL(new Blob([blob],{type:"application/octet-stream"})),a=document.createElement("a");a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();window.__dlx=1;setTimeout(function(){URL.revokeObjectURL(u);},8000);
     }
   }catch(e){if(e&&(e.code==="declined"||e.name==="AbortError"))return;toast("บันทึกไฟล์ไม่สำเร็จ ลองอีกครั้ง");return;}
   $("sendmod").hidden=true;
