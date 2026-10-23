@@ -33400,7 +33400,8 @@ textarea{resize:vertical;min-height:70px}
           <option>เทศบาลตำบลกุดชมภู</option>
           <option>โรงพยาบาลส่งเสริมสุขภาพตำบลกุดชมภู</option>
           <option value="__other">อื่น ๆ (พิมพ์เอง)</option></select>
-        <input id="to" placeholder="พิมพ์ชื่อผู้รับ เช่น นายอำเภอพิบูลมังสาหาร" aria-label="ผู้รับอื่น ๆ" style="margin-top:6px" hidden></div>
+        <input id="to" placeholder="พิมพ์ชื่อผู้รับ เช่น นายอำเภอพิบูลมังสาหาร" aria-label="ผู้รับอื่น ๆ" style="margin-top:6px" hidden>
+        <div style="margin-top:4px"><button type="button" id="toEdit" class="link">จัดการรายการผู้รับ (เพิ่ม/แก้ไข/ลบ)</button></div></div>
       <div class="fld"><label for="ref">อ้างถึง (ถ้ามี)</label><input id="ref" data-k="ref"></div>
       <div class="lab" style="margin-bottom:4px">สิ่งที่ส่งมาด้วย (ถ้ามี)</div>
       <div id="encl"></div>
@@ -33436,13 +33437,6 @@ textarea{resize:vertical;min-height:70px}
       </div>
     </div>
 
-    <div class="sec">
-      <h2>บัญชีเข้าเว็บส่งหนังสือ</h2>
-      <p style="margin:0 0 10px;font-size:13px;color:#5b6477;line-height:1.5">ใส่ครั้งเดียวต่อเครื่อง ใช้ให้เว็บส่งหนังสือเข้าสู่ระบบให้อัตโนมัติเมื่อกด “ส่ง” ข้อมูลนี้เก็บเฉพาะในเครื่องนี้ ไม่ถูกบันทึกลงหนังสือหรือไฟล์ที่บันทึก</p>
-      <div class="fld"><label for="amssU">ชื่อผู้ใช้</label><input id="amssU" autocomplete="off" autocapitalize="off" spellcheck="false"></div>
-      <div class="fld"><label for="amssP">รหัสผ่าน</label><input id="amssP" type="password" autocomplete="off"></div>
-    </div>
-
     <div class="sec" id="attsec">
       <h2>เอกสารแนบต่อท้าย</h2>
       <p style="margin:0 0 10px;font-size:13px;color:#5b6477;line-height:1.5">แทรกไฟล์ PDF หรือรูปภาพ ให้ต่อจากหนังสือและรวมเป็นไฟล์ PDF เดียวกัน (ใช้ได้กับปุ่ม “บันทึกเป็น PDF” และ “พิมพ์”)</p>
@@ -33451,6 +33445,13 @@ textarea{resize:vertical;min-height:70px}
       <input id="attcam" type="file" accept="image/*" capture="environment" hidden>
       <div id="attlist" class="attlist"></div>
       <p id="attnote" style="margin:8px 0 0;font-size:12.5px;color:#8a5a00;line-height:1.5" hidden>หมายเหตุ: ไฟล์ Word ไม่รวมเอกสารแนบ ถ้าต้องการรวมให้ใช้ PDF หรือสั่งพิมพ์</p>
+    </div>
+
+    <div class="sec">
+      <h2>บัญชีเข้าเว็บส่งหนังสือ</h2>
+      <p style="margin:0 0 10px;font-size:13px;color:#5b6477;line-height:1.5">ใส่ครั้งเดียวต่อเครื่อง ใช้ให้เว็บส่งหนังสือเข้าสู่ระบบให้อัตโนมัติเมื่อกด “ส่ง” ข้อมูลนี้เก็บเฉพาะในเครื่องนี้ ไม่ถูกบันทึกลงหนังสือหรือไฟล์ที่บันทึก</p>
+      <div class="fld"><label for="amssU">ชื่อผู้ใช้</label><input id="amssU" autocomplete="off" autocapitalize="off" spellcheck="false"></div>
+      <div class="fld"><label for="amssP">รหัสผ่าน</label><input id="amssP" type="password" autocomplete="off"></div>
     </div>
 
     <div class="sec">
@@ -33479,6 +33480,16 @@ textarea{resize:vertical;min-height:70px}
     <select id="sm-mode" aria-label="โหมดภาพ"><option value="bw">ขาวดำ (เอกสาร)</option><option value="color">สี (ปรับแสง)</option><option value="orig">ต้นฉบับ</option></select>
   </div>
   <div class="sm-bot"><button type="button" id="sm-ok" class="primary">ตัดและเพิ่ม</button><button type="button" id="sm-next">ตัดแล้วสแกนหน้าถัดไป</button></div>
+</div>
+<div class="dlgmod" id="tomod" hidden role="dialog" aria-modal="true" aria-label="จัดการรายการผู้รับ">
+  <div class="dlg">
+    <h3>รายการผู้รับ (เรียน)</h3>
+    <div id="tolist" style="display:flex;flex-direction:column;gap:8px;max-height:46vh;overflow:auto;margin-bottom:12px"></div>
+    <label for="toNew">เพิ่มผู้รับใหม่</label>
+    <div class="send-row"><input id="toNew" type="text" autocomplete="off" placeholder="เช่น นายอำเภอพิบูลมังสาหาร"><button type="button" id="toAdd" style="min-height:44px;padding:8px 14px;border-radius:10px;border:1px solid #b9c1d6;background:#fff;color:#1b2233;font:inherit">เพิ่ม</button></div>
+    <p style="margin:10px 0 14px;font-size:12.5px;color:#5b6477;line-height:1.5">รายการแรก (ผู้อำนวยการ สพป.อุบลราชธานี เขต 3) แก้หรือลบไม่ได้ เพราะใช้กำหนดปุ่ม “ส่ง” รายการเก็บเฉพาะในเครื่องนี้</p>
+    <div class="dlg-act"><button type="button" id="toDone" class="sendbtn">เสร็จ</button></div>
+  </div>
 </div>
 <div class="dlgmod" id="sendmod" hidden role="dialog" aria-modal="true" aria-label="ส่งหนังสือ">
   <div class="dlg">
@@ -33601,17 +33612,17 @@ function autoDraft(){
   if((m=/^(?:ขอส่ง|ส่ง)\s*(.*)$/.exec(sub)))
     return {body:"ด้วย"+org+"ได้ดำเนินการจัดทำ"+m[1]+"เรียบร้อยแล้ว จึงขอส่ง"+m[1]+" มาพร้อมหนังสือนี้",closing:"จึงเรียนมาเพื่อโปรดทราบ"};
   if((m=/^ขออนุญาต\s*(.*)$/.exec(sub)))
-    return {body:"ด้วย"+org+"มีความประสงค์จะ"+m[1]+" ในวันที่ "+PH+"\nในการนี้ จึงขออนุญาต"+m[1]+"ดังกล่าว"+tail,closing:"จึงเรียนมาเพื่อโปรดพิจารณาอนุญาต"};
+    return {body:"ด้วย"+org+"มีความประสงค์จะ"+m[1]+"\nในการนี้ จึงขออนุญาต"+m[1]+"ดังกล่าว"+tail,closing:"จึงเรียนมาเพื่อโปรดพิจารณาอนุญาต"};
   if((m=/^(?:ขอเชิญ|เชิญ)\s*(.*)$/.exec(sub)))
-    return {body:"ด้วย"+org+"กำหนดจัด"+m[1]+" ในวันที่ "+PH+" เวลา "+PH+" น. ณ "+PH+"\nในการนี้ จึงขอเชิญท่านเข้าร่วมตามวัน เวลา และสถานที่ดังกล่าว"+tail,closing:"จึงเรียนมาเพื่อโปรดทราบและเข้าร่วมตามวันเวลาดังกล่าว"};
+    return {body:"ด้วย"+org+"กำหนดจัด"+m[1]+"\nในการนี้ จึงขอเชิญท่านเข้าร่วม"+m[1]+"ดังกล่าว"+tail,closing:"จึงเรียนมาเพื่อโปรดทราบ"};
   if((m=/^(ขอความอนุเคราะห์|ขอความร่วมมือ|ขอ)\s*(.*)$/.exec(sub)))
-    return {body:"ด้วย"+org+"มีความประสงค์"+m[1]+m[2]+" เพื่อ"+PH+"\nในการนี้ จึง"+m[1]+m[2]+"ตามวัตถุประสงค์ดังกล่าว"+tail,
+    return {body:"ด้วย"+org+"มีความประสงค์"+m[1]+m[2]+"\nในการนี้ จึง"+m[1]+m[2]+"ดังกล่าว"+tail,
       closing:m[1]==="ขอความอนุเคราะห์"?"จึงเรียนมาเพื่อโปรดพิจารณาให้ความอนุเคราะห์":m[1]==="ขอความร่วมมือ"?"จึงเรียนมาเพื่อโปรดพิจารณาให้ความร่วมมือ":"จึงเรียนมาเพื่อโปรดพิจารณา"};
   if((m=/^แจ้ง\s*(.*)$/.exec(sub)))
-    return {body:"ด้วย"+org+"ขอแจ้ง"+m[1]+"ให้ทราบ ดังนี้\n"+PH+tail,closing:"จึงเรียนมาเพื่อโปรดทราบ"};
+    return {body:"ด้วย"+org+"ขอแจ้ง"+m[1]+"ให้ทราบ"+tail,closing:"จึงเรียนมาเพื่อโปรดทราบ"};
   if((m=/^รายงาน\s*(.*)$/.exec(sub)))
-    return {body:"ด้วย"+org+"ขอรายงาน"+m[1]+" ดังนี้\n"+PH+tail,closing:"จึงเรียนมาเพื่อโปรดทราบ"};
-  return {body:"ด้วย"+org+"ขอเรียนให้ทราบเกี่ยวกับเรื่อง "+sub+" ดังนี้\n"+PH+tail,closing:"จึงเรียนมาเพื่อโปรดทราบ"};
+    return {body:"ด้วย"+org+"ได้ดำเนินการจัดทำรายงาน"+m[1]+"เรียบร้อยแล้ว จึงขอรายงาน"+m[1]+"ให้ทราบ"+tail,closing:"จึงเรียนมาเพื่อโปรดทราบ"};
+  return {body:"ด้วย"+org+"ขอเรียนให้ทราบเกี่ยวกับเรื่อง "+sub+tail,closing:"จึงเรียนมาเพื่อโปรดทราบ"};
 }
 function autoFill(){
   var d=autoDraft(),ch=false;
@@ -33690,7 +33701,7 @@ function layout(){
   t+=hasPSK?'<span>ตัวอย่างใช้ฟอนต์ TH SarabunPSK ขนาด 16</span>':'<span>เครื่องนี้ไม่มีฟอนต์ TH SarabunPSK ตัวอย่างและ PDF จึงใช้ฟอนต์ใกล้เคียง ไฟล์ Word กำหนดเป็น TH SarabunPSK ขนาด 16</span>';
   statusEl.innerHTML=t;
 }
-function render(){sheet.innerHTML=sheetHTML();layout();
+function render(){updateSendBtn();sheet.innerHTML=sheetHTML();layout();
   sheet.querySelectorAll("img.sigimg").forEach(function(im){if(!im.complete)im.addEventListener("load",layout);});}
 function schedule(){if(pending)return;pending=true;requestAnimationFrame(function(){pending=false;autoFill();render();});}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
@@ -34330,7 +34341,65 @@ function quickSave(mode){
   }
   runSave(S.subject,$("send-go"));
 }
-$("btn-send").addEventListener("click",function(){quickSave("send");});
+/* รายการผู้รับ (เรียน): เพิ่ม/แก้ไข/ลบได้ เก็บในเครื่องนี้ */
+var TOKEY="amssToList";
+function toListGet(){
+  var def=["ผู้อำนวยการสำนักงานเขตพื้นที่การศึกษาประถมศึกษาอุบลราชธานี เขต 3","ผู้ปกครองนักเรียน","เทศบาลตำบลกุดชมภู","โรงพยาบาลส่งเสริมสุขภาพตำบลกุดชมภู"],l=null;
+  try{var r=JSON.parse(localStorage.getItem(TOKEY)||"null");if(Array.isArray(r))l=r.map(function(x){return String(x||"").trim();}).filter(Boolean);}catch(_){}
+  if(!l)l=def;
+  l=l.filter(function(x,i){return x!==def[0]&&l.indexOf(x)===i;});l.unshift(def[0]);return l;
+}
+function toListSave(l){try{localStorage.setItem(TOKEY,JSON.stringify(l));}catch(_){}}
+function buildToSel(){
+  var sel=$("toSel"),l=toListGet();sel.innerHTML="";
+  var o0=document.createElement("option");o0.value="";o0.textContent="เลือกผู้รับ…";sel.appendChild(o0);
+  l.forEach(function(x){var o=document.createElement("option");o.textContent=x;sel.appendChild(o);});
+  var ot=document.createElement("option");ot.value="__other";ot.textContent="อื่น ๆ (พิมพ์เอง)";sel.appendChild(ot);
+  syncTo();
+}
+function renderToList(){
+  var box=$("tolist"),l=toListGet();box.innerHTML="";
+  l.forEach(function(x,i){
+    var row=document.createElement("div");row.style.cssText="display:flex;gap:6px;align-items:center";
+    var inp=document.createElement("input");inp.type="text";inp.value=x;inp.style.cssText="flex:1;min-width:0;font-size:15px;padding:9px 10px;border:1px solid #b9c1d6;border-radius:10px;background:#fff;color:#1b2233";
+    if(i===0){inp.disabled=true;row.appendChild(inp);var tag=document.createElement("span");tag.textContent="ใช้ปุ่มส่ง";tag.style.cssText="font-size:12px;color:#5b6477;white-space:nowrap";row.appendChild(tag);}
+    else{
+      inp.addEventListener("change",function(){
+        var v=inp.value.trim(),cur=toListGet();
+        if(!v||cur.indexOf(v)>=0&&cur[i]!==v){inp.value=cur[i];return;}
+        var old=cur[i];cur[i]=v;toListSave(cur);
+        if(S.to===old){S.to=v;S.toSel=v;save();schedule();}
+        buildToSel();
+      });
+      row.appendChild(inp);
+      var del=document.createElement("button");del.type="button";del.textContent="ลบ";del.setAttribute("aria-label","ลบ "+x);
+      del.style.cssText="min-height:40px;padding:6px 12px;border-radius:10px;border:1px solid #d9a0a0;background:#fff;color:#a02020;font:inherit;font-size:14px";
+      del.addEventListener("click",function(){var cur=toListGet();cur.splice(i,1);toListSave(cur);renderToList();buildToSel();});
+      row.appendChild(del);
+    }
+    box.appendChild(row);
+  });
+}
+$("toEdit").addEventListener("click",function(){renderToList();$("tomod").hidden=false;});
+$("toDone").addEventListener("click",function(){$("tomod").hidden=true;});
+$("tomod").addEventListener("click",function(e){if(e.target===this)this.hidden=true;});
+function toAddNew(){var v=$("toNew").value.trim();if(!v)return;var cur=toListGet();if(cur.indexOf(v)<0){cur.push(v);toListSave(cur);}$("toNew").value="";renderToList();buildToSel();}
+$("toAdd").addEventListener("click",toAddNew);
+$("toNew").addEventListener("keydown",function(e){if(e.key==="Enter"){e.preventDefault();toAddNew();}});
+buildToSel();
+var DEFTO="ผู้อำนวยการสำนักงานเขตพื้นที่การศึกษาประถมศึกษาอุบลราชธานี เขต 3";
+function toIsDefault(){return String(S.to||"").trim()===DEFTO;}
+var sendHint0=null;
+function updateSendBtn(){
+  var b=$("btn-send");if(!b)return;var h=document.querySelector(".sendhint");
+  if(sendHint0===null&&h)sendHint0=h.textContent;
+  var def=toIsDefault();
+  if(b.dataset.mode!==(def?"send":"print")){
+    b.dataset.mode=def?"send":"print";b.textContent=def?"ส่ง":"พิมพ์";
+    if(h)h.textContent=def?sendHint0:"ผู้รับไม่ใช่ สพป.อุบลราชธานี เขต 3 จึงใช้ปุ่มพิมพ์ (รวมหนังสือกับเอกสารแนบ) แทนการส่งผ่านเว็บส่งหนังสือ";
+  }
+}
+$("btn-send").addEventListener("click",function(){if(toIsDefault())quickSave("send");else $("btn-print").click();});
 $("btn-pdf").addEventListener("click",function(){quickSave("pdf");});
 $("send-cancel").addEventListener("click",function(){$("sendmod").hidden=true;});
 $("sendmod").addEventListener("click",function(e){if(e.target===this)this.hidden=true;});
