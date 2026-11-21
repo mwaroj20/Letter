@@ -1,5 +1,27 @@
 <!doctype html>
-<html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><script>/* เก็บข้อมูลผู้ใช้ให้อยู่ถาวร: สำรองลง IndexedDB อีกชั้น + ขอสิทธิ์เก็บถาวร + กู้คืนถ้า localStorage ถูกล้าง */
+(function(){
+var KEYS=["ltr.draft.v3","ltr.sig.v1","amssLogin","amssToList"];
+try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist();}catch(e){}
+var DB=null;
+function open(cb){try{var r=indexedDB.open("ltr-backup",1);r.onupgradeneeded=function(){r.result.createObjectStore("kv");};r.onsuccess=function(){DB=r.result;cb(DB);};r.onerror=function(){cb(null);};}catch(e){cb(null);}}
+function put(k,v){open(function(d){if(!d)return;try{var t=d.transaction("kv","readwrite");if(v==null)t.objectStore("kv").delete(k);else t.objectStore("kv").put(v,k);}catch(e){}});}
+try{
+var st=Storage.prototype,si=st.setItem,ri=st.removeItem;
+st.setItem=function(k,v){si.call(this,k,v);if(this===window.localStorage&&KEYS.indexOf(k)>=0)put(k,String(v));};
+st.removeItem=function(k){ri.call(this,k);if(this===window.localStorage&&KEYS.indexOf(k)>=0)put(k,null);};
+}catch(e){}
+try{
+var missing=KEYS.filter(function(k){return localStorage.getItem(k)==null;});
+var did=false;try{did=sessionStorage.getItem("ltrRestored")==="1";}catch(e){}
+if(missing.length&&!did){
+ open(function(d){if(!d)return;var t=d.transaction("kv","readonly"),os=t.objectStore("kv"),got=0,n=0;
+  missing.forEach(function(k){var q=os.get(k);q.onsuccess=function(){if(q.result!=null){try{si.call(localStorage,k,q.result);got++;}catch(e){}}};});
+  t.oncomplete=function(){if(got){try{sessionStorage.setItem("ltrRestored","1");}catch(e){}location.reload();}};});
+}else if(!missing.length){KEYS.forEach(function(k){var v=localStorage.getItem(k);if(v!=null)put(k,v);});}
+}catch(e){}
+})();</script>
+
 <style>html,body{margin:0}[hidden]{display:none!important}</style>
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#1c3f9c">
