@@ -30,8 +30,8 @@ if(missing.length&&!did){
 <meta name="theme-color" content="#1c3f9c">
 <link rel="icon" href="icon-192.png"><link rel="apple-touch-icon" href="icon-180.png">
 <meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Letter">
-<title>ร่างหนังสือนำส่ง</title>
+<meta name="apple-mobile-web-app-title" content="ส่งหนังสือราชการ">
+<title>ส่งหนังสือราชการ</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <script src="lib.js"></script>
 <style>
@@ -149,6 +149,7 @@ textarea{resize:vertical;min-height:70px}
 .opt:has(input:checked){border-color:var(--accent);background:var(--accent-soft)}
 .sigbtns{display:flex;gap:8px;align-items:center;margin:0 0 6px 0}
 .stagecol{position:sticky;top:calc(env(safe-area-inset-top,0px) + 76px);min-width:0}
+.zbar{display:none;max-width:794px;margin:0 auto 8px;align-items:center;gap:6px;font-size:13px;color:var(--muted)}.zbar span{margin-right:auto}.zbar button{padding:4px 12px;min-height:34px;border-radius:99px;background:var(--surface)}.zbar button[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);color:var(--accent);font-weight:600}@media (min-width:921px){.zbar{display:flex}}
 .stage{width:100%;max-width:794px;margin:0 auto;position:relative;overflow:hidden}
 .sheet{position:absolute;left:0;top:0;transform-origin:0 0;width:595.3pt}
 .status{max-width:794px;margin:12px auto 0;font-size:13px;color:var(--muted);display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center}
@@ -157,6 +158,7 @@ textarea{resize:vertical;min-height:70px}
 .toast button{color:var(--bg);border-color:transparent;background:none;text-decoration:underline;min-height:0;padding:0}
 /* ---- the sheet (A4, measured in points like the Word file) ---- */
 .paper{display:flex;flex-direction:column;width:595.3pt;min-height:841.9pt;padding:72pt 59.8pt 56.75pt 72pt;background:var(--paper);color:var(--paper-ink);font-family:var(--paperfont);font-size:var(--psize);line-height:1.35;box-shadow:var(--shadow);box-sizing:border-box}
+.paper>*{flex-shrink:0}
 .paper p{margin:0}
 .paper .garuda{display:block;margin:0 auto;width:71.6pt;height:72.5pt}
 .paper .no{display:flex;justify-content:space-between;align-items:flex-start;gap:12pt;white-space:nowrap}
@@ -344,7 +346,7 @@ textarea{resize:vertical;min-height:70px}
     <div class="arow">
       <button id="btn-new" class="primary" type="button"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M12 11v6M9 14h6"/></svg>เริ่มฉบับใหม่</button>
       <button id="btn-reg" class="accentline" type="button"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/></svg>ลงทะเบียน<span class="lng">หนังสือส่ง</span></button>
-      <button id="btn-regview" type="button" title="ทะเบียนหนังสือส่ง"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/></svg>ทะเบียน <span id="regcount"></span></button>
+      <button id="btn-regview" type="button" title="ทะเบียนหนังสือส่ง"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/></svg>ดูทะเบียน<span class="lng"> หนังสือส่ง</span> <span id="regcount"></span></button>
     </div>
     <div class="arow">
       <button id="btn-print" class="primary" type="button"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9V3h12v6"/><rect x="6" y="14" width="12" height="7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/></svg>พิมพ์</button>
@@ -442,6 +444,7 @@ textarea{resize:vertical;min-height:70px}
   </section>
 
   <section class="stagecol" aria-label="ตัวอย่างหนังสือ">
+    <div class="zbar" id="zbar" role="group" aria-label="ขนาดตัวอย่าง"><span>ขนาดตัวอย่าง</span><button type="button" data-z="w" aria-pressed="true">ขยายเต็มความกว้าง</button><button type="button" data-z="h" aria-pressed="false">พอดีทั้งหน้า</button></div>
     <div class="stage" id="stage"><div class="sheet paper" id="sheet"></div></div>
     <div class="status" id="status"></div>
     <div class="attpv" id="attpv" hidden></div>
@@ -798,7 +801,7 @@ function paginate(paper){
   var last=units.length?pgRect(paper,units[units.length-1].els):{b:0},np=Math.max(1,Math.floor((last.b-0.01)/PGH)+1);
   paper.style.minHeight=np*PGH+"px";
   var foot=paper.querySelector(".foot");
-  if(foot){var fr=pgRect(paper,[foot]);if(fr.t+30*PXK<last.b+6){np++;paper.style.minHeight=np*PGH+"px";}}
+  if(foot){var fr=pgRect(paper,[foot]),fh=fr.b-fr.t;if(fr.t+30*PXK<last.b+6||last.b+fh+6>np*PGH-PGBM){np++;paper.style.minHeight=np*PGH+"px";}}
   paper.style.height=np*PGH+"px";paper.dataset.np=np;
   return np;
 }
@@ -869,13 +872,17 @@ function layout(){
     t+=hasPSK?'<span>ตัวอย่างใช้ฟอนต์ TH SarabunPSK ขนาด 16</span>':'<span>เครื่องนี้ไม่มีฟอนต์ TH SarabunPSK ตัวอย่างและ PDF จึงใช้ฟอนต์ใกล้เคียง ไฟล์ Word กำหนดเป็น TH SarabunPSK ขนาด 16</span>';
     statusEl.innerHTML=t;
     var col=stage.parentNode,pw=sheet.offsetWidth||794,wide=window.innerWidth>920,s=Math.min(1,Math.min(794,col.clientWidth)/pw);
-    if(wide){var top0=col.parentNode.getBoundingClientRect().top+window.scrollY,ah=window.innerHeight-top0-statusEl.offsetHeight-20;
+    if(wide&&zoomMode()==="h"){var top0=col.parentNode.getBoundingClientRect().top+window.scrollY,ah=window.innerHeight-top0-statusEl.offsetHeight-20;
       var ph=Math.min(sheet.offsetHeight,PGH);if(ah>0&&ph)s=Math.min(s,Math.max(0.4,ah/ph));}
     stage.style.width=wide?Math.floor(pw*s)+"px":"";
     sheet.style.transform="scale("+s+")";
     stage.style.height=Math.ceil(sheet.offsetHeight*s)+"px";
   });
 }
+function zoomMode(){try{return localStorage.getItem("ltr.zoom")==="h"?"h":"w";}catch(_){return "w";}}
+function zoomUi(){var m=zoomMode();document.querySelectorAll("#zbar button").forEach(function(b){b.setAttribute("aria-pressed",String(b.dataset.z===m));});}
+document.querySelectorAll("#zbar button").forEach(function(b){b.addEventListener("click",function(){try{localStorage.setItem("ltr.zoom",b.dataset.z);}catch(_){}zoomUi();layout();});});
+zoomUi();
 function render(){updateSendBtn();uiUpd();
   var ae=document.activeElement,ed=(ae&&sheet.contains(ae))?edOf(ae):null,sv=ed?saveSel(ed):null,key=ed&&ed.dataset.e;
   sheet.innerHTML=sheetHTML(true);layout();
@@ -1123,7 +1130,7 @@ function toast(msg,act){var t=$("toast");t.innerHTML="";var s=document.createEle
 /* ---------- save to viewer ---------- */
 var dl=null;
 if(window.claude&&claude.use){claude.use("downloads").then(function(d){dl=d;}).catch(function(){});}
-function fname(ext){return "ร่างหนังสือนำส่ง."+ext;}
+function fname(ext){return "ส่งหนังสือราชการ."+ext;}
 async function offer(ext,data){
   if(!dl&&window.claude&&claude.use){try{dl=await claude.use("downloads");}catch(e){}}
   if(!dl&&!window.claude){var u=URL.createObjectURL(data),a=document.createElement("a");a.href=u;a.download=fname(ext);document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(u);},5000);toast("บันทึกไฟล์ "+(ext==="docx"?"Word":"PDF")+" แล้ว ดูในโฟลเดอร์ดาวน์โหลดของเครื่อง");return;}
@@ -1217,7 +1224,7 @@ async function buildPdfBlob(){
   /* หนังสือยาวหลายหน้า: ตัดทีละหน้า A4 ตรงกับตัวอย่าง */
   var pagePx=Math.round(cv.width*PH_/PW),np=Math.max(1,Math.round(cv.height/pagePx));
   var P=window.PDFLib,doc=await P.PDFDocument.create();
-  doc.setTitle(S.subject||"ร่างหนังสือนำส่ง");
+  doc.setTitle(S.subject||"ส่งหนังสือราชการ");
   for(var i=0;i<np;i++){
     var sl=document.createElement("canvas");sl.width=cv.width;sl.height=pagePx;
     var x=sl.getContext("2d");x.fillStyle="#fff";x.fillRect(0,0,sl.width,sl.height);
@@ -1648,7 +1655,7 @@ function pushFill(){
     try{sendWin.postMessage({type:"amss-fill",fields:ls.fields,file:{name:ls.name,type:"application/pdf",buffer:buf}},org);}catch(_){}
   });
 }
-function cleanName(v){v=String(v||"").replace(/[\\\/:*?"<>|\r\n\t]+/g," ").replace(/\.(pdf|docx)$/i,"").trim();return v||"ร่างหนังสือนำส่ง";}
+function cleanName(v){v=String(v||"").replace(/[\\\/:*?"<>|\r\n\t]+/g," ").replace(/\.(pdf|docx)$/i,"").trim();return v||"ส่งหนังสือราชการ";}
 function openSendSite(){
   var w=null;try{w=window.open(sendUrl(),"_blank");}catch(e){}
   if(w){sendWin=w;return;}
