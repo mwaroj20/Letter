@@ -1876,8 +1876,8 @@ var bcopy=$("btn-copy");if(bcopy)bcopy.addEventListener("click",async function()
 
 /* ===== ทะเบียนหนังสือส่ง: เก็บใน Google Sheets ผ่าน Apps Script ===== */
 var REGCFG="regCfg",REGQ="regQueue",regRows=[],regEdit=null;
-var REGDEF="https://script.google.com/macros/s/AKfycbyovqVc-phcVL8LxQzSMdnpovagNw8W2CpE7nutPrehxO1u-wAIp_J5aeQkVOaFsI9i/exec";
-function regCfg(){var o={};try{o=JSON.parse(localStorage.getItem(REGCFG)||"{}")||{};}catch(_){}return {url:String(o.url||"").trim()||REGDEF,token:String(o.token||"")};}
+var REGOLD="https://script.google.com/macros/s/AKfycbyovqVc-phcVL8LxQzSMdnpovagNw8W2CpE7nutPrehxO1u-wAIp_J5aeQkVOaFsI9i/exec";var REGDEF="https://script.google.com/macros/s/AKfycbxjLbC3WLg46258KJMYkdGc8_aPiGnrFfhlC0PJpkQsfScbg5tj6WitNPJ_CwDbBuat/exec";
+function regCfg(){var o={};try{o=JSON.parse(localStorage.getItem(REGCFG)||"{}")||{};}catch(_){}var u=String(o.url||"").trim();if(!u||u===REGOLD)u=REGDEF;return {url:u,token:String(o.token||"")};}
 function regCfgSave(c){try{localStorage.setItem(REGCFG,JSON.stringify(c));}catch(_){}}
 function regQGet(){try{var a=JSON.parse(localStorage.getItem(REGQ)||"[]");return Array.isArray(a)?a:[];}catch(_){return [];}}
 function regQSet(a){try{localStorage.setItem(REGQ,JSON.stringify(a));}catch(_){a.forEach(function(x){delete x.pdf;});try{localStorage.setItem(REGQ,JSON.stringify(a));toast("พื้นที่เก็บในเครื่องไม่พอ รายการที่ค้างจะลงทะเบียนโดยไม่แนบไฟล์ PDF");}catch(__){}}}
