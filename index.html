@@ -224,6 +224,7 @@ textarea{resize:vertical;min-height:70px}
 .pgsp{flex:none;height:0;pointer-events:none;user-select:none}
 .paper .body p[data-cont]{text-indent:0!important;margin-top:0!important}
 .paper .body p{white-space:pre-wrap}
+.paper .body p[data-ni]{text-indent:0}
 .pgband{position:absolute;left:0;right:0;height:16px;background:#d3d9e8;pointer-events:none;display:flex;align-items:center;justify-content:center;font:600 10px/1 system-ui,sans-serif;color:#5b6477;box-shadow:inset 0 3px 4px -3px rgba(0,0,0,.3),inset 0 -3px 4px -3px rgba(0,0,0,.3);z-index:2;white-space:nowrap}
 .paper [contenteditable="true"]{outline:none;cursor:text;border-radius:3px;transition:background .15s}
 .paper [contenteditable="true"]:hover{background:rgba(47,91,216,.07)}
@@ -690,7 +691,7 @@ function sheetHTML(edit){
   if(String(S.ref||"").trim()||(edit&&0))h+='<div class="lbl more"><span>อ้างถึง</span><span'+E("ref","อ้างถึง")+'>'+hl(S.ref)+'</span></div>';
   var er=enclRows();
   er.forEach(function(t,i){h+='<div class="lbl enc'+(i?' more':' more')+'"><span'+(i?' style="visibility:hidden"':'')+'>สิ่งที่ส่งมาด้วย</span><span>'+hl(t)+'</span></div>';});
-  h+='<div class="body"'+E("body","พิมพ์เนื้อหาหนังสือ")+'>'+bodyLines(S.body).map(function(t){return '<p>'+(t===""?'<br>':hl(t))+'</p>';}).join("")+'</div>';
+  h+='<div class="body"'+E("body","พิมพ์เนื้อหาหนังสือ")+'>'+bodyLines(S.body).map(function(t){var ni=t.charAt(0)==="\u2060";if(ni)t=t.slice(1);return '<p'+(ni?' data-ni="1"':'')+'>'+(t===""?'<br>':hl(t))+'</p>';}).join("")+'</div>';
   if(String(S.closing||"").trim()||edit)h+='<p class="clo"'+E("closing","ประโยคลงท้าย")+' style="text-indent:70.9pt;margin-top:8pt">'+hl(S.closing)+'</p>';
   h+='<p class="sal sl" style="margin-top:16pt"><span class="m">'+esc(S.sal)+'</span></p>';
   var sg=curSig();if(sg)h+='<img class="sigimg ct" alt="" src="'+sg.url+'">';else h+='<p class="sal" style="height:44pt"></p>';
@@ -811,8 +812,30 @@ function drawBands(paper,np){
 }
 /* ---- แก้ไขในตัวอย่าง ---- */
 function edOf(t){var n=t&&t.nodeType===3?t.parentNode:t;return n&&n.closest?n.closest("[data-e]"):null;}
+function bgroups(ed){var G=[];[].forEach.call(ed.childNodes,function(n){
+  if(n.nodeType===1&&n.classList.contains("pgsp"))return;
+  if(n.nodeType===1&&n.hasAttribute("data-cont")&&G.length)G[G.length-1].push(n);else G.push([n]);});return G;}
+function bpt(ed,n,o){
+  var G=bgroups(ed),c=n,i,j;
+  if(n===ed){c=ed.childNodes[o]||null;o=0;if(!c){return {g:Math.max(0,G.length-1),o:1e9};}}
+  else{while(c&&c.parentNode!==ed)c=c.parentNode;}
+  for(i=0;i<G.length;i++){var pos=G[i].indexOf(c);if(pos<0)continue;
+    var acc=0;for(j=0;j<pos;j++)acc+=G[i][j].textContent.length;
+    var r=document.createRange();r.setStart(c,0);try{r.setEnd(n,o);}catch(_){}
+    return {g:i,o:acc+r.toString().length};}
+  return {g:Math.max(0,G.length-1),o:1e9};
+}
+function bresolve(ed,pt){
+  var G=bgroups(ed),g=G[Math.min(pt.g,G.length-1)];if(!g)return [ed,0];
+  var o=pt.o,k;
+  for(k=0;k<g.length;k++){var len=g[k].textContent.length;
+    if(o<len||k===g.length-1){return pointAt(g[k],Math.min(o,len),false);}
+    o-=len;}
+  return [ed,0];
+}
 function saveSel(ed){
   var sl=getSelection();if(!sl||!sl.rangeCount||!ed.contains(sl.anchorNode)||!ed.contains(sl.focusNode))return null;
+  if(ed.dataset.e==="body")return {b:1,a:bpt(ed,sl.anchorNode,sl.anchorOffset),f:bpt(ed,sl.focusNode,sl.focusOffset)};
   function off(n,o){var r=document.createRange();r.setStart(ed,0);r.setEnd(n,o);return r.toString().length;}
   return {a:off(sl.anchorNode,sl.anchorOffset),f:off(sl.focusNode,sl.focusOffset),as:sl.anchorNode.nodeType===3&&sl.anchorOffset===0};
 }
@@ -821,12 +844,16 @@ function pointAt(ed,o,atStart){
   while((n=w.nextNode())){var len=n.nodeValue.length;last=n;if(atStart?(o<acc+len):(o<=acc+len))return [n,o-acc];acc+=len;}
   return last?[last,last.nodeValue.length]:[ed,0];
 }
-function restoreSel(ed,s){var a=pointAt(ed,s.a,s.as),f=pointAt(ed,s.f,false);try{getSelection().setBaseAndExtent(a[0],a[1],f[0],f[1]);}catch(_){}}
+function restoreSel(ed,s){var a,f;
+  if(s.b){a=bresolve(ed,s.a);f=bresolve(ed,s.f);}else{a=pointAt(ed,s.a,s.as);f=pointAt(ed,s.f,false);}
+  var sl=getSelection();
+  if(sl&&sl.rangeCount&&sl.anchorNode===a[0]&&sl.anchorOffset===a[1]&&sl.focusNode===f[0]&&sl.focusOffset===f[1])return;
+  try{sl.setBaseAndExtent(a[0],a[1],f[0],f[1]);}catch(_){}}
 function readBody(ed){
   var L=[];[].forEach.call(ed.childNodes,function(n){
     if(n.nodeType===1&&n.classList.contains("pgsp"))return;
     var t=String(n.textContent).replace(/ /g," ");
-    if(n.nodeType===1&&n.hasAttribute("data-cont")&&L.length)L[L.length-1]+=t;else L.push(t);});
+    if(n.nodeType===1&&n.hasAttribute("data-cont")&&L.length)L[L.length-1]+=t;else L.push((n.nodeType===1&&n.hasAttribute("data-ni")?"\u2060":"")+t);});
   while(L.length&&L[L.length-1]==="")L.pop();
   return L.join("\n");
 }
@@ -840,12 +867,19 @@ function syncFromPreview(ed){
 function liveSoon(){clearTimeout(liveT);liveT=setTimeout(function(){if(!composing)layout();},350);}
 function keepSel(fn){var ae=document.activeElement,ed=(ae&&sheet.contains(ae))?edOf(ae):null,sv=ed?saveSel(ed):null;fn();if(ed&&sv)restoreSel(ed,sv);}
 try{document.execCommand("defaultParagraphSeparator",false,"p");}catch(_){}
+sheet.addEventListener("keydown",function(e){var ed=edOf(e.target);if(ed&&ed.dataset.e==="body"&&e.key==="Tab"&&!e.ctrlKey&&!e.altKey&&!e.metaKey){e.preventDefault();var sl=getSelection(),done=false;
+  if(sl.rangeCount&&sl.isCollapsed){var pt=bpt(ed,sl.anchorNode,sl.anchorOffset),g=bgroups(ed)[pt.g],el=g&&g[0];
+    if(pt.o===0&&el&&el.nodeType===1&&el.hasAttribute("data-ni")){el.removeAttribute("data-ni");syncFromPreview(ed);liveSoon();done=true;}}
+  if(!done)document.execCommand("insertText",false,"        ");}});
 sheet.addEventListener("compositionstart",function(){composing=true;});
 sheet.addEventListener("compositionend",function(){composing=false;liveSoon();});
 sheet.addEventListener("beforeinput",function(e){
   var ed=edOf(e.target);if(!ed)return;
   var t=e.inputType,sl=getSelection(),safe=false;
   if(ed.dataset.e!=="body"&&(t==="insertParagraph"||t==="insertLineBreak")){e.preventDefault();return;}
+  if(ed.dataset.e==="body"&&t==="deleteContentBackward"&&sl.isCollapsed&&sl.rangeCount){
+    var pt=bpt(ed,sl.anchorNode,sl.anchorOffset),g=bgroups(ed)[pt.g],el=g&&g[0];
+    if(pt.o===0&&el&&el.nodeType===1&&!el.hasAttribute("data-ni")){e.preventDefault();el.setAttribute("data-ni","1");syncFromPreview(ed);liveSoon();return;}}
   if(t==="insertText"||t==="insertCompositionText"||t==="insertReplacementText")safe=sl.isCollapsed;
   else if((t==="deleteContentBackward"||t==="deleteContentForward")&&sl.isCollapsed&&sl.anchorNode&&sl.anchorNode.nodeType===3){
     var o=sl.anchorOffset,len=sl.anchorNode.nodeValue.length;safe=t==="deleteContentBackward"?o>0:o<len;}
@@ -1164,7 +1198,7 @@ function buildDocx(){
   out.push(lab("เรียน",S.to||"",false));
   if(String(S.ref||"").trim())out.push(lab("อ้างถึง",S.ref.trim(),false));
   enclRows().forEach(function(t,i){out.push(i?P([T(t)],{indent:{left:labTab("สิ่งที่ส่งมาด้วย")}}):lab("สิ่งที่ส่งมาด้วย",t,false));});
-  bodyLines(S.body).forEach(function(t,i){out.push(P([T(t)],{indent:{firstLine:1418},spacing:{before:i?120:160}}));});
+  bodyLines(S.body).forEach(function(t,i){var ni=t.charAt(0)==="\u2060";if(ni)t=t.slice(1);out.push(P([T(t)],{indent:{firstLine:ni?0:1418},spacing:{before:i?120:160}}));});
   if(String(S.closing||"").trim())out.push(P([T(S.closing.trim())],{indent:{firstLine:1418},spacing:{before:200}}));
   var sT=Math.round(estPt(S.sal||"")*20),cc=R+sT/2;
   function LF(wTw){return Math.max(0,Math.round(cc-wTw/2));}
@@ -1638,7 +1672,7 @@ function loginGet(){try{var o=JSON.parse(localStorage.getItem("amssLogin")||"{}"
 (function(){var o=loginGet();$("amssU").value=o.u;$("amssP").value=o.p;
   function sv(){try{localStorage.setItem("amssLogin",JSON.stringify({u:$("amssU").value.trim(),p:$("amssP").value}));}catch(_){}}
   $("amssU").addEventListener("input",sv);$("amssP").addEventListener("input",sv);})();
-function buildFields(name){var lg=loginGet();return {login:(lg.u&&lg.p)?lg:null,dateISO:String(S.date||""),dateTH:dateText(S.date),toGroup:String(S.toGroup||""),no:fullNo(),subject:String(S.subject||"").trim(),summary:String(S.body||"").trim(),fileDesc:String(S.subject||"").trim(),fileName:name};}
+function buildFields(name){var lg=loginGet();return {login:(lg.u&&lg.p)?lg:null,dateISO:String(S.date||""),dateTH:dateText(S.date),toGroup:String(S.toGroup||""),no:fullNo(),subject:String(S.subject||"").trim(),summary:String(S.body||"").replace(/\u2060/g,"").trim(),fileDesc:String(S.subject||"").trim(),fileName:name};}
 function sendUrl(){var u=SEND_URL;try{if(lastSend&&lastSend.fields){var j=JSON.stringify(lastSend.fields),b=btoa(unescape(encodeURIComponent(j))).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");u+="#amss="+b;}}catch(_){}return u;}
 function webDataText(){var d=lastSend&&lastSend.fields;if(!d)return "";return (d.toGroup?"ถึง: "+d.toGroup+"\n":"")+"เลขที่หนังสือ: "+d.no+(d.dateTH?"\nวันที่: "+d.dateTH:"")+"\nเรื่อง: "+d.subject+"\nเนื้อหาโดยสรุป: "+d.summary+"\nคำอธิบายไฟล์: "+d.fileDesc;}
 window.addEventListener("message",function(e){
@@ -1826,7 +1860,7 @@ var bcopy=$("btn-copy");if(bcopy)bcopy.addEventListener("click",async function()
   t.push("","เรื่อง   "+(S.subject||""),"เรียน   "+(S.to||""));
   if(String(S.ref||"").trim())t.push("อ้างถึง  "+S.ref.trim());
   enclRows().forEach(function(x,i){t.push((i?"                  ":"สิ่งที่ส่งมาด้วย  ")+x);});
-  t.push("");lines(S.body).forEach(function(x){t.push("        "+x);});
+  t.push("");lines(S.body.replace(/\u2060/g,"")).forEach(function(x){t.push("        "+x);});
   if(String(S.closing||"").trim())t.push("","        "+S.closing.trim());
   t.push("","                    "+(S.sal||""),"","","                    "+name());
   lines(S.pos).forEach(function(x){t.push("                    "+x);});
@@ -1868,7 +1902,7 @@ function regMark(rec){S.regOK=rec.bookNo+"|"+rec.date;save();}
 function regSend(rec,force,after){var b=$("btn-reg");b.disabled=true;
   regCall({op:"add",rec:rec,force:force}).then(function(j){b.disabled=false;
     if(j.dup){askYes("ลงทะเบียนซ้ำหรือไม่?","เลขที่ "+j.dup.bookNo+" ลงวันที่ "+dateText(j.dup.date)+" ลงทะเบียนไว้แล้ว (ทะเบียนส่งที่ "+j.dup.no+"/"+j.dup.year+")\nต้องการลงทะเบียนซ้ำหรือไม่?","ลงทะเบียนซ้ำ").then(function(y){if(y)regSend(rec,true,after);else if(after)after(false);});return;}
-    regMark(rec);if(j.rec&&!regRows.some(function(x){return x.id===j.rec.id;}))regRows.push(j.rec);regLoaded=true;noRecalc();toast(j.rec.fileErr?"ลงทะเบียนแล้ว (ที่ "+j.rec.no+"/"+j.rec.year+") แต่แนบไฟล์ไม่สำเร็จ: "+j.rec.fileErr:"ลงทะเบียนแล้ว เลขทะเบียนส่งที่ "+j.rec.no+"/"+j.rec.year+(j.rec.file?" พร้อมแนบไฟล์ PDF":""));regListLoad(true);if(after)after(true);
+    regMark(rec);if(j.rec&&!regRows.some(function(x){return x.id===j.rec.id;}))regRows.push(j.rec);regLoaded=true;noRecalc();toast(!j.rec.fileErr&&!j.rec.file?"ลงทะเบียนแล้ว แต่เซิร์ฟเวอร์ไม่ได้เก็บไฟล์ PDF — Apps Script ยังเป็นรุ่นเก่า ให้ Deploy เวอร์ชันใหม่ (ทดสอบที่ตั้งค่าทะเบียน)":j.rec.fileErr?"ลงทะเบียนแล้ว (ที่ "+j.rec.no+"/"+j.rec.year+") แต่แนบไฟล์ไม่สำเร็จ: "+j.rec.fileErr:"ลงทะเบียนแล้ว เลขทะเบียนส่งที่ "+j.rec.no+"/"+j.rec.year+(j.rec.file?" พร้อมแนบไฟล์ PDF":""));regListLoad(true);if(after)after(true);
   }).catch(function(e){b.disabled=false;
     if(e.net){var q=regQGet();q.push(rec);regQSet(q);regMark(rec);noRecalc();toast("ส่งเข้าทะเบียนไม่ได้ เก็บรายการไว้ในเครื่องแล้ว จะส่งเมื่อเปิด ทะเบียนหนังสือส่ง");if(after)after(true);}
     else{toast("ลงทะเบียนไม่สำเร็จ: "+e.message);if(after)after(false);}});}
@@ -1934,7 +1968,7 @@ $("regRef").addEventListener("click",function(){regFlush().then(regListLoad);});
 $("regQ").addEventListener("input",regRender);$("regYear").addEventListener("change",regRender);
 $("regCsv").addEventListener("click",regCsv);
 $("regTest").addEventListener("click",function(){var o=$("regTestOut");regCfgSave({url:$("regUrl").value.trim(),token:$("regTok").value});o.textContent="กำลังทดสอบ…";
-  regCall({op:"ping"}).then(function(j){o.textContent="เชื่อมต่อสำเร็จ (มี "+j.count+" รายการ)";regFlush().then(regListLoad);}).catch(function(e){o.textContent="ไม่สำเร็จ: "+e.message;});});
+  regCall({op:"ping"}).then(function(j){o.textContent=!j.ver?"เชื่อมต่อได้ แต่ Apps Script ยังเป็นรุ่นเก่า (ต้องวาง Code.gs ใหม่ แล้ว Deploy › เวอร์ชันใหม่) ไฟล์ PDF จึงไม่ถูกเก็บ":!j.drive?"เชื่อมต่อได้ แต่ยังไม่ได้ให้สิทธิ์ Drive: "+j.driveErr+" (เปิด Apps Script › เลือกฟังก์ชัน folder_ › Run › อนุญาต แล้ว Deploy ใหม่)":"เชื่อมต่อสำเร็จ (มี "+j.count+" รายการ) เก็บไฟล์ PDF ได้";regFlush().then(regListLoad);}).catch(function(e){o.textContent="ไม่สำเร็จ: "+e.message;});});
 
 
 /* แถบคำสั่งด้านบน */
